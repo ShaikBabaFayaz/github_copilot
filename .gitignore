@@ -1,0 +1,4 @@
+node_modules/
+sessions/.hook-log.jsonl
+*.log
+.DS_Store

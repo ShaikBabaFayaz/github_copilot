@@ -1,0 +1,54 @@
+{
+  // MCP servers for the Agentic SDLC pipeline.
+  // Secrets are never stored here: VS Code prompts once for each ${input:...} and keeps the
+  // value in the OS credential store (Windows Credential Manager / Keychain / Secret Service).
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "confluence-url",
+      "description": "Confluence base URL (Cloud: https://<your-site>.atlassian.net/wiki)"
+    },
+    {
+      "type": "promptString",
+      "id": "atlassian-email",
+      "description": "Atlassian account email used for API-token auth"
+    },
+    {
+      "type": "promptString",
+      "id": "confluence-api-token",
+      "description": "Confluence API token (https://id.atlassian.com/manage-profile/security/api-tokens)",
+      "password": true
+    },
+    {
+      "type": "promptString",
+      "id": "confluence-spaces",
+      "description": "Comma-separated Confluence space keys the pipeline may read (e.g. ENG,PRD)"
+    }
+  ],
+  "servers": {
+    // Primary input source. Read-only and limited to the two tools confluence-extractor uses.
+    "confluence": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-atlassian"],
+      "env": {
+        "CONFLUENCE_URL": "${input:confluence-url}",
+        "CONFLUENCE_USERNAME": "${input:atlassian-email}",
+        "CONFLUENCE_API_TOKEN": "${input:confluence-api-token}",
+        "CONFLUENCE_SPACES_FILTER": "${input:confluence-spaces}",
+        "READ_ONLY_MODE": "true",
+        "ENABLED_TOOLS": "confluence_search,confluence_get_page"
+      }
+    },
+    // Local Git operations are scoped to the workspace root (open agentic-sdlc-pipeline).
+    "git": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "${workspaceFolder}"]
+    }
+
+    // OAuth alternative (Atlassian Cloud only, no token): replace the server above with
+    //   "atlassian": { "type": "http", "url": "https://mcp.atlassian.com/v1/mcp" }
+    // and change confluence-extractor's tools to ["read", "atlassian/*"].
+  }
+}
